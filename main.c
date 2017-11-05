@@ -1,18 +1,36 @@
 #include <stdio.h>
 
-#define	PCHAR	82
-#define PLIMIT	1024
+#include "readline.c"
+
+const int pchar		=	82;
+const int plimit 	=	1024;
+const int maxline 	=	1024;
 
 int main(){
 	
-	double p_storage[PLIMIT];
+	extern const int plimit;
+	extern const int maxline;
 	
-	for(int i = 0; i < PLIMIT; ++i){
-		p_storage[i] = 0.0;
+	double 	parameters[plimit];
+	char	line[maxline];
+	
+	for(int i = 0; i < plimit; ++i){
+		parameters[i] = 0.0;
 	}
 	
+	printf("Simple Static Interpreter(SSI) Version 1.0\n");
+	printf("Press Ctrl+C to Exit\n");
+	printf("SSI> ");
 	
-	
+	while(readline(line) > 0){
+		
+		printf("\t%s", line);
+		
+		printf("SSI> ");
+	}
 	
 	return 0;
 }
+
+
+
