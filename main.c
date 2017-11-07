@@ -3,6 +3,7 @@
 
 #include "readline.c"
 #include "comment.c"
+#include "math_interpreter.c"
 
 const int pchar		=	82;
 const int plimit 	=	1024;
@@ -10,11 +11,11 @@ const int maxline 	=	1024;
 
 int main()
 {
-	
+	extern const int pchar;
 	extern const int plimit;
 	extern const int maxline;
+	double parameters[plimit];
 	
-	double 	parameters[plimit];
 	char	line[maxline];
 	char	comment_string[maxline];
 	int len_line = 0, len_comment = 0;
@@ -42,11 +43,13 @@ int main()
 			{
 				len_comment = comment(line, comment_string, &index);
 			}
+			else if (line[index] == pchar)	//Parameter has found
+			{
+				math_interpreter(parameters, pchar, plimit, line, &index);
+			}
 			else ++index;
-		
 		}
 		
-		printf("%s", line);
 		if (len_comment > 0) printf("Comment: %s\n", comment_string);
 		
 		printf("SSI> ");
