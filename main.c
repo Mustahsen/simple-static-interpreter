@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "readline.c"
-#include "comment.c"
-#include "math_interpreter.c"
-
 const int pchar		=	82;
 const int plimit 	=	1024;
 const int maxline 	=	1024;
+
+#include "readline.c"
+#include "comment.c"
+#include "math_interpreter.c"
 
 int main()
 {
@@ -43,7 +43,7 @@ int main()
 			{
 				len_comment = comment(line, comment_string, &index);
 			}
-			else if (line[index] == pchar)	//Parameter has found
+			else if (line[index] == pchar || line[index] >= '0' && line[index] <= '9')	//Parameter has found
 			{
 				math_interpreter(parameters, pchar, plimit, line, &index);
 			}

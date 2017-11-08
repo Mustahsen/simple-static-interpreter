@@ -1,3 +1,19 @@
+
+#define case_terminate	0
+#define case_target		10
+#define case_equals		20
+#define case_expression	100
+#define case_term		200
+#define case_factor		300
+
+
+
+
+
+
+
+
+
 struct token{
 	int type;
 	double value;
@@ -39,6 +55,7 @@ double value_interpreter(char parameter_char, char input_string[], int *start_in
 void math_interpreter(double parameters[], char parameter_char, int count_parameters, char input_string[], int *start_index)
 {
 	extern const int maxline;
+	extern const int plimit;
 	
 	int type_eof			=	0;		// ASCII versions of the respected string will be used the denote the respected token type
 
@@ -131,10 +148,259 @@ void math_interpreter(double parameters[], char parameter_char, int count_parame
 		}
 	}
 	
-	for (i = 0; i < token_index; ++i){
+	int case_operation			= -1;
+
+	int count_call_term 		= 0;
+	int count_return_term 		= 0;
+
+	int count_call_factor		= 0;
+	int count_return_factor		= 0;
+
+	double result 				= 0;
+	double result_expression 	= 0;
+	double result_term 			= 0;
+	double result_factor 		= 0;
+
+	int expression_operation	= 0;
+	int term_operation 			= 0;
+	int target_parameter;
+	int negate;
+	bool assign;
+	
+	i = 0;
+	
+	case_operation = case_target;
+	while (i < token_limit)
+	{
+		printf("%d\n", case_operation);
+		switch(case_operation){
 		
-		printf("Type: %d	Value:%.0f\n", tokens[i].type, tokens[i].value);
+			case case_terminate:
+			
+				count_call_term = count_call_factor = 0;
+				if (assign)
+				{
+					if (target_parameter >= 0 && target_parameter <= plimit)
+					{
+						parameters[target_parameter] = result;
+						printf("Result: %c%d <-- %10.5f\n",parameter_char, target_parameter, result);
+					}
+					else
+					{
+						printf("Parameter is not in limit (You can choose between 0 - 1023)!\n");
+						return;
+					}
+				}
+				else
+				{
+					printf("Result: %10.5f\n", result);
+				}
+				
+				if (tokens[i].type != type_eof)
+				{
+					case_operation = case_target;
+					break;
+				}
+				else
+				{
+					i = token_limit;
+					break;
+				}
 		
+			case case_target:
+				assign = 0;
+				if (tokens[i].type == type_parameter)
+				{
+					target_parameter = tokens[i].value;
+					++i;
+					case_operation = case_equals;
+				}
+				else if (tokens[i].type == type_value)
+				{
+					case_operation = case_expression;
+				}
+				else
+				{
+					case_operation = case_terminate;
+				}
+				
+				break;
+		
+			case case_equals:
+				
+				if (tokens[i].type == type_equals)
+				{
+					++i;
+					assign = 1;
+					case_operation = case_expression;
+				}
+				else if (tokens[i].type != type_value && tokens[i].type != type_parameter)
+				{
+					case_operation = case_expression;
+				}
+				else
+				{
+					case_operation = case_terminate;
+				}
+				
+				break;
+				
+			case case_expression:
+			
+				if (count_return_term == 0)
+				{
+					case_operation = case_term;
+					++count_call_term;
+				}
+				
+				else if (count_return_term == 1)	
+				{
+					result_expression = result_term;
+					
+					if (tokens[i].type == type_plus || tokens[i].type == type_minus)
+					{
+						expression_operation = tokens[i].type;
+						++i;
+						case_operation = case_term;
+						++count_call_term;
+					}
+					
+					else
+					{
+						result = result_expression;
+						case_operation = case_terminate;
+					}
+				}
+		
+				else if (count_return_term >= 2)
+				{
+					if (expression_operation == type_plus)
+					{
+						result_expression += result_term;
+					}
+					else 
+					{
+						result_expression -= result_term;
+					}
+					
+					if (tokens[i].type == type_plus || tokens[i].type == type_minus)
+					{
+						expression_operation = tokens[i].type;
+						++i;
+						case_operation = case_term;
+						++count_call_term;
+					}
+					
+					else
+					{
+						result = result_expression;
+						case_operation = case_terminate;
+					}
+					
+				}
+				
+				break;
+			
+			case case_term:
+			
+				if (count_return_factor == 0)
+				{
+					case_operation = case_factor;
+					++count_call_factor;
+				}
+				
+				else if (count_return_factor == 1)	
+				{
+					result_term = result_factor;
+					
+					if (tokens[i].type == type_multiply || tokens[i].type == type_divide)
+					{
+						term_operation = tokens[i].type;
+						++i;
+						case_operation = case_factor;
+						++count_call_factor;
+					}
+					
+					else
+					{
+						case_operation = case_expression;
+						count_call_factor = count_return_factor = 0;
+						++count_return_term;
+					}
+				}
+				
+				else if (count_return_term >= 2)
+				{
+					if (expression_operation == type_multiply)
+					{
+						result_term *= result_factor;
+					}
+					else 
+					{
+						result_term /= result_factor;
+					}
+					
+					if (tokens[i].type == type_multiply || tokens[i].type == type_divide)
+					{
+						term_operation = tokens[i].type;
+						++i;
+						case_operation = case_factor;
+						++count_call_factor;
+					}
+					
+					else
+					{
+						case_operation = case_expression;
+						count_call_factor = count_return_factor = 0;
+						++count_return_term;
+					}
+					
+				}
+				
+				break;
+			
+			case case_factor:
+				
+				negate = 0;
+				
+				while(tokens[i].type == type_minus)
+				{
+					++negate;
+					++i;
+				}
+				
+				if (tokens[i].type == type_value)
+				{
+					result_factor = tokens[i].value;
+					++i;
+					++count_return_factor;
+					case_operation = case_term;
+				}
+				else if (tokens[i].type == type_parameter)
+				{
+					if (tokens[i].value >= 0 && tokens[i].value <= plimit)
+					{
+						result_factor = parameters[(int)tokens[i].value];
+						++i;
+						++count_return_factor;
+						case_operation = case_term;
+					}
+					else
+					{
+						printf("Syntax Error!\n");
+						return;
+					}
+				}
+			if (negate / 2)
+			{
+				result_factor *= -1;
+			}
+			
+			break;
+		}
 	}
+	
+	
+	
 	return;
 }
